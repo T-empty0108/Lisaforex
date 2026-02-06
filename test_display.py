@@ -1,188 +1,170 @@
 """
-LISA FOREX - Display Debug
-Run: python test_display.py
+LISA FOREX - Display Debug Tool
+================================
+Run:  python test_display.py
 
-Tests why display.html is not updating:
-  1. Check if git pull was done (display.html version)
-  2. Check server /api/signal response
-  3. Check data.json content
-  4. Check if display.html has new code or old code
+Kiem tra tai sao display.html hien thi sai data
 """
 
-import os
-import json
-import sys
+import os, json, sys
 
-os.system("")  # Enable ANSI on Windows
+os.system("")
+G = "\033[92m"; R = "\033[91m"; Y = "\033[93m"; B = "\033[94m"; W = "\033[0m"
+BASE = os.path.dirname(os.path.abspath(__file__))
+UPDATE = os.path.join(BASE, "update(tuan)")
 
-G = "\033[92m"
-R = "\033[91m"
-Y = "\033[93m"
-B = "\033[94m"
-W = "\033[0m"
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPDATE_DIR = os.path.join(BASE_DIR, "update(tuan)")
-
-
-def sep(title):
+try:
     print(f"\n{'='*60}")
-    print(f"  {title}")
+    print(f"  LISA FOREX - Display Debug")
+    print(f"  Base: {BASE}")
     print(f"{'='*60}")
 
-
-# 1. Check display.html version
-sep("1. display.html version check")
-display_path = os.path.join(UPDATE_DIR, "display.html")
-if os.path.exists(display_path):
-    with open(display_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    if "const SERVER = 'http://localhost:8000'" in content:
-        print(f"  {G}NEW version - reads from server API{W}")
-    elif "data.json?" in content and "localhost" not in content:
-        print(f"  {R}OLD version - reads from local file (will fail in Chrome){W}")
-        print(f"  {R}>>> Run: git pull{W}")
-    else:
-        print(f"  {Y}Unknown version{W}")
-
-    if "Feb 02, 2026" in content:
-        print(f"  {R}OLD hardcoded date 'Feb 02, 2026' found{W}")
-        print(f"  {R}>>> Run: git pull{W}")
-    elif 'id="reportDate">---' in content:
-        print(f"  {G}Placeholder '---' OK (no hardcoded date){W}")
-    else:
-        print(f"  {Y}Could not detect date placeholder{W}")
-
-    if "BUY LIMIT</span>" in content and "4916.5" in content:
-        print(f"  {R}OLD hardcoded signals found (BUY LIMIT 4916.5){W}")
-    elif "Loading..." in content:
-        print(f"  {G}Placeholder 'Loading...' OK (no hardcoded signals){W}")
-else:
-    print(f"  {R}display.html NOT FOUND at {display_path}{W}")
-
-
-# 2. Check git status
-sep("2. Git status")
-try:
+    # ===== 1. GIT PULL STATUS =====
+    print(f"\n{B}[1] Git status{W}")
     import subprocess
-    r = subprocess.run(["git", "log", "--oneline", "-3"], capture_output=True, text=True, cwd=BASE_DIR)
+    r = subprocess.run(["git", "log", "--oneline", "-5"], capture_output=True, text=True, cwd=BASE)
     if r.returncode == 0:
         for line in r.stdout.strip().split("\n"):
-            print(f"  {B}{line}{W}")
+            has_fix = "display" in line.lower() or "fix" in line.lower()
+            color = G if has_fix else W
+            print(f"  {color}{line}{W}")
 
-    r = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, cwd=BASE_DIR)
-    if r.returncode == 0:
-        status = r.stdout.strip()
-        if status:
-            print(f"\n  Modified files:")
-            for line in status.split("\n")[:10]:
-                print(f"    {line}")
-        else:
-            print(f"  {G}Clean - no local changes{W}")
-except FileNotFoundError:
-    print(f"  {R}git not found{W}")
+    # ===== 2. DISPLAY.HTML VERSION =====
+    print(f"\n{B}[2] display.html version{W}")
+    dp = os.path.join(UPDATE, "display.html")
+    if os.path.exists(dp):
+        with open(dp, "r", encoding="utf-8") as f:
+            html = f.read()
 
+        checks = [
+            ("localhost:8000" in html, "Reads from SERVER API", "Reads from LOCAL file (OLD!)"),
+            ("Feb 02, 2026" not in html, "No hardcoded date", "Has OLD hardcoded 'Feb 02, 2026'"),
+            ("4916.5" not in html, "No hardcoded signals", "Has OLD hardcoded signals"),
+            ("Loading..." in html, "Has Loading placeholder", "Missing Loading placeholder"),
+        ]
+        for ok, good, bad in checks:
+            if ok:
+                print(f"  {G}PASS{W} {good}")
+            else:
+                print(f"  {R}FAIL{W} {bad} --> Run: git pull")
+    else:
+        print(f"  {R}NOT FOUND: {dp}{W}")
 
-# 3. Check data.json
-sep("3. data.json content")
-data_path = os.path.join(UPDATE_DIR, "data.json")
-if os.path.exists(data_path):
-    try:
-        with open(data_path, "r", encoding="utf-8") as f:
+    # ===== 3. DATA.JSON =====
+    print(f"\n{B}[3] data.json{W}")
+    djp = os.path.join(UPDATE, "data.json")
+    if os.path.exists(djp):
+        with open(djp, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        print(f"  updated_at: {data.get('updated_at', '?')}")
+        print(f"  updated_at:    {data.get('updated_at', '?')}")
         print(f"  current_price: {data.get('current_price', '?')}")
 
         sig = data.get("current_signal")
         if sig:
-            print(f"  signal: {sig.get('signal')} @ {sig.get('entry')} [{sig.get('status')}]")
+            print(f"  current_signal: {G}{sig.get('signal')} @ {sig.get('entry')} [{sig.get('status')}]{W}")
+        else:
+            print(f"  current_signal: {R}null{W}")
 
         report = data.get("yesterday_report")
         if report:
-            print(f"  {G}yesterday_report:{W}")
-            print(f"    date: {report.get('date', '?')}")
-            print(f"    date_display: {report.get('date_display', '?')}")
+            print(f"  yesterday_report:")
+            print(f"    date_display: {G}{report.get('date_display', '?')}{W}")
             print(f"    TP: {report.get('tp_count', 0)} ({report.get('tp_pips', 0)}p)")
             print(f"    SL: {report.get('sl_count', 0)} ({report.get('sl_pips', 0)}p)")
             print(f"    NET: {report.get('net_pips', 0)}p")
         else:
-            print(f"  {R}yesterday_report: null{W}")
+            print(f"  yesterday_report: {R}null{W}")
 
         prev = data.get("previous_signals", [])
         print(f"  previous_signals: {len(prev)}")
-    except Exception as e:
-        print(f"  {R}Error reading data.json: {e}{W}")
-else:
-    print(f"  {R}data.json NOT FOUND{W}")
+        for i, p in enumerate(prev):
+            print(f"    [{i}] {p.get('signal')} @ {p.get('entry')} [{p.get('status')}] {p.get('profit_formatted')}")
+    else:
+        print(f"  {R}NOT FOUND{W}")
 
-
-# 4. Check server
-sep("4. Server /api/signal")
-try:
-    import httpx
-except ImportError:
-    print(f"  {R}httpx not installed{W}")
-    httpx = None
-
-if httpx:
+    # ===== 4. SERVER API =====
+    print(f"\n{B}[4] Server http://localhost:8000{W}")
     try:
-        r = httpx.get("http://localhost:8000/api/signal", timeout=5.0)
-        if r.status_code == 200:
-            api_data = r.json()
-            report = api_data.get("yesterday_report")
-            if report:
-                print(f"  {G}API returns date_display: {report.get('date_display', '?')}{W}")
-                print(f"  TP: {report.get('tp_count')} SL: {report.get('sl_count')} NET: {report.get('net_pips')}p")
+        import httpx
+    except:
+        try:
+            import requests as httpx
+        except:
+            httpx = None
+
+    if httpx:
+        # /api/signal
+        try:
+            r = httpx.get("http://localhost:8000/api/signal", timeout=5)
+            if hasattr(r, 'status_code'):
+                status = r.status_code
             else:
-                print(f"  {R}API yesterday_report is null{W}")
+                status = r.status
 
-            sig = api_data.get("current_signal")
-            if sig:
-                print(f"  Signal: {sig.get('signal')} @ {sig.get('entry')}")
-        else:
-            print(f"  {R}Status {r.status_code}{W}")
-    except httpx.ConnectError:
-        print(f"  {R}Cannot connect to localhost:8000 - server not running{W}")
-    except Exception as e:
-        print(f"  {R}Error: {e}{W}")
+            if status == 200:
+                api = r.json()
+                sig = api.get("current_signal")
+                report = api.get("yesterday_report")
+                print(f"  {G}/api/signal OK{W}")
+                if sig:
+                    print(f"    signal: {sig.get('signal')} @ {sig.get('entry')} [{sig.get('status')}]")
+                if report:
+                    print(f"    report: {report.get('date_display')} NET={report.get('net_pips')}p")
+            else:
+                print(f"  {R}/api/signal -> {status}{W}")
+        except Exception as e:
+            print(f"  {R}/api/signal FAIL: {e}{W}")
 
-    # 5. Check /display route
-    sep("5. Server /display route")
+        # /display
+        try:
+            r = httpx.get("http://localhost:8000/display", timeout=5)
+            if hasattr(r, 'status_code'):
+                status = r.status_code
+            else:
+                status = r.status
+
+            if status == 200:
+                txt = r.text if hasattr(r, 'text') else r.content.decode()
+                if "localhost:8000" in txt:
+                    print(f"  {G}/display OK (new version){W}")
+                else:
+                    print(f"  {R}/display serves OLD version -> restart server after git pull{W}")
+            else:
+                print(f"  {R}/display -> {status} (need git pull + restart server){W}")
+        except Exception as e:
+            print(f"  {R}/display FAIL: {e}{W}")
+    else:
+        print(f"  {R}httpx/requests not installed, skip API test{W}")
+
+    # ===== 5. PORT CHECK =====
+    print(f"\n{B}[5] Port 8000{W}")
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(2)
     try:
-        r = httpx.get("http://localhost:8000/display", timeout=5.0)
-        if r.status_code == 200:
-            if "const SERVER = 'http://localhost:8000'" in r.text:
-                print(f"  {G}/display serves NEW version{W}")
-            else:
-                print(f"  {R}/display serves OLD version (server needs restart after git pull){W}")
-            print(f"  {G}Open: http://localhost:8000/display{W}")
-        else:
-            print(f"  {R}Status {r.status_code} (server may need git pull + restart){W}")
-    except httpx.ConnectError:
-        print(f"  {R}Server not running{W}")
-    except Exception as e:
-        print(f"  {R}Error: {e}{W}")
+        s.connect(("127.0.0.1", 8000))
+        print(f"  {G}Port 8000 OPEN (server running){W}")
+        s.close()
+    except:
+        print(f"  {R}Port 8000 CLOSED (server NOT running){W}")
 
+    # ===== SUMMARY =====
+    print(f"\n{'='*60}")
+    print(f"  {Y}HOW TO FIX:{W}")
+    print(f"  1. git pull")
+    print(f"     del test_api.py (neu bi loi conflict)")
+    print(f"     del test_system.py")
+    print(f"     git pull")
+    print(f"  2. Restart server (tat bat, mo lai)")
+    print(f"  3. Mo display qua SERVER:")
+    print(f"     {G}http://localhost:8000/display{W}")
+    print(f"  {R}KHONG mo: file:///C:/.../display.html{W}")
+    print(f"{'='*60}")
 
-# Summary
-sep("SUMMARY")
-print(f"""
-  {B}To fix display.html on machine 2:{W}
+except Exception as e:
+    print(f"\n{R}ERROR: {e}{W}")
+    import traceback
+    traceback.print_exc()
 
-  1. Open CMD in Lisaforex folder:
-     {Y}cd C:\\Users\\KG\\Desktop\\Project\\Lisaforex{W}
-     {Y}git pull{W}
-
-  2. Restart server (close bat, reopen):
-     {Y}Double-click START_LISA_FOREX.bat{W}
-
-  3. Open display via SERVER (not file://):
-     {G}http://localhost:8000/display{W}
-
-  Do NOT open: file:///C:/.../display.html
-  (Chrome blocks XHR from file:// protocol)
-""")
-
-input("Press Enter to exit...")
+input("\nPress Enter to exit...")

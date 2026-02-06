@@ -10,9 +10,15 @@ echo    LISA FOREX - AUTO LAUNCHER
 echo ============================================================
 echo.
 
-:: Step 1: Git pull latest code
-echo [1/4] Updating code from GitHub...
-git pull
+:: Step 1: Git pull latest code (optional)
+echo [1/4] Update code from GitHub?
+set /p PULL_CHOICE="Ban co muon cap nhat code tu GitHub? (Y/N): "
+if /i "%PULL_CHOICE%"=="Y" (
+    echo Dang cap nhat code tu GitHub...
+    git pull
+) else (
+    echo Bo qua cap nhat, su dung code local.
+)
 echo.
 
 :: Step 2: Start server.py (FastAPI + WebSocket + Chart)

@@ -152,38 +152,30 @@
     }
 
     // ═══════════════════════════════════════════
-    // SCROLL: Auto / Elastic Pin
+    // SCROLL: Auto / Pin (5-min interval)
     // ═══════════════════════════════════════════
+    let pinTimer = null;
+
     function setScroll(m) {
         scrollM = m;
         document.getElementById('btnA').classList.toggle('active', m === 'auto');
         document.getElementById('btnP').classList.toggle('active', m === 'pin');
-        if (m === 'auto') chart.timeScale().scrollToRealTime();
+        if (pinTimer) { clearInterval(pinTimer); pinTimer = null; }
+        if (m === 'auto') {
+            chart.timeScale().scrollToRealTime();
+        } else {
+            // Pin mode: scroll to realtime every 5 minutes
+            pinTimer = setInterval(() => {
+                chart.timeScale().scrollToRealTime();
+            }, 5 * 60 * 1000);
+        }
     }
     document.getElementById('btnA').addEventListener('click', () => setScroll('auto'));
     document.getElementById('btnP').addEventListener('click', () => setScroll('pin'));
 
     function smartScroll() {
         if (scrollM === 'auto') { chart.timeScale().scrollToRealTime(); return; }
-        const lc = liveC || (hist.length ? hist[hist.length-1] : null);
-        if (!lc || !cSeries) return;
-        const vr = chart.timeScale().getVisibleLogicalRange();
-        if (!vr) return;
-        const vw = vr.to - vr.from;
-        const allLen = hist.length + (liveC && liveC.time > lastHT ? 1 : 0);
-        const ovX = allLen - 1 - vr.to;
-        if (ovX > vw * 0.25) {
-            chart.timeScale().setVisibleLogicalRange({ from: vr.from + ovX - 2, to: vr.to + ovX - 2 });
-            return;
-        }
-        try {
-            const h = chartEl.clientHeight;
-            const py = cSeries.priceToCoordinate(lc.close);
-            if (py !== null && !isNaN(py)) {
-                const buf = h * 0.25;
-                if (py < -buf || py > h + buf) chart.timeScale().scrollToRealTime();
-            }
-        } catch(e) {}
+        // Pin mode: do nothing — timer handles it every 5 minutes
     }
 
     // ═══════════════════════════════════════════
@@ -703,6 +695,9 @@
         sigCurrent = sig;
 
         if (isNew) {
+            // Save current view position before modifying series
+            const savedRange = (scrollM === 'pin') ? chart.timeScale().getVisibleLogicalRange() : null;
+
             // Remove old line series
             if (sigEntryLine) { try { chart.removeSeries(sigEntryLine); } catch(e) {} }
             sigEntryTime = sigParseTime(sig.timestamp);
@@ -717,6 +712,11 @@
                 title: '',
             });
             sigEntryLine.setData(sigBuildLineData(sig));
+
+            // Restore view position in Pin mode
+            if (savedRange) {
+                chart.timeScale().setVisibleLogicalRange(savedRange);
+            }
         } else {
             // Only update line data when a new candle interval starts
             const iSec = INT_SEC[curTF];
