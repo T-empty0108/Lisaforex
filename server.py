@@ -484,6 +484,15 @@ async def serve_signal():
     return JSONResponse({"error": "data.json not found"}, status_code=404)
 
 
+@app.get("/display")
+async def serve_display():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "update(tuan)", "display.html")
+    if os.path.exists(p):
+        with open(p, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>display.html not found</h1>")
+
+
 @app.get("/")
 async def serve_chart():
     p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chart.html")
