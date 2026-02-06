@@ -336,14 +336,14 @@
         
         <!-- Current Signal - NỀN XANH -->
         <div class="current-section" id="currentSection">
-            <div class="signal-type buy" id="signalType">BUY STOP</div>
-            <div class="entry-price"><span>Entry:</span> <span id="entryPrice">4918.97</span></div>
+            <div class="signal-type buy" id="signalType">---</div>
+            <div class="entry-price"><span>Entry:</span> <span id="entryPrice">---</span></div>
             <div class="profit-box">
                 <div class="profit-value neutral" id="profitValue">+0.0p</div>
                 <div class="profit-label" id="profitLabel">Profit</div>
             </div>
             <div class="signal-time">
-                Signal: <strong id="signalTime">10:04 AM</strong> <span style="color:#7dd3fc">(GMT+0)</span>
+                Signal: <strong id="signalTime">--:--</strong> <span style="color:#7dd3fc">(GMT+0)</span>
             </div>
         </div>
         
@@ -351,19 +351,19 @@
         <div class="targets" id="targetsSection">
             <div class="target tp">
                 <div class="target-label" id="tp1Label">TP1</div>
-                <div class="target-value" id="tp1Value">4921.9</div>
+                <div class="target-value" id="tp1Value">---</div>
             </div>
             <div class="target tp">
                 <div class="target-label" id="tp2Label">TP2</div>
-                <div class="target-value" id="tp2Value">4923.9</div>
+                <div class="target-value" id="tp2Value">---</div>
             </div>
             <div class="target tp">
                 <div class="target-label" id="tp3Label">TP3</div>
-                <div class="target-value" id="tp3Value">4926.9</div>
+                <div class="target-value" id="tp3Value">---</div>
             </div>
             <div class="target sl">
                 <div class="target-label" id="slLabel">SL</div>
-                <div class="target-value" id="slValue">4915.9</div>
+                <div class="target-value" id="slValue">---</div>
             </div>
         </div>
         
@@ -371,36 +371,7 @@
         <div class="prev-section">
             <div class="prev-title">📊 Previous Signals</div>
             <div class="prev-list" id="prevList">
-                <div class="prev-item">
-                    <div class="prev-left">
-                        <span class="prev-type buy">BUY LIMIT</span>
-                        <span class="prev-meta">4916.5 • 8:12 AM</span>
-                    </div>
-                    <div class="prev-right">
-                        <div class="prev-status win">✓ TP3</div>
-                        <div class="prev-profit win">+80.0p</div>
-                    </div>
-                </div>
-                <div class="prev-item">
-                    <div class="prev-left">
-                        <span class="prev-type sell">BUY STOP</span>
-                        <span class="prev-meta">4922 • 7:59 AM</span>
-                    </div>
-                    <div class="prev-right">
-                        <div class="prev-status loss">✗ SL</div>
-                        <div class="prev-profit loss">-40.0p</div>
-                    </div>
-                </div>
-                <div class="prev-item">
-                    <div class="prev-left">
-                        <span class="prev-type buy">BUY LIMIT</span>
-                        <span class="prev-meta">4870.15 • 6:35 AM</span>
-                    </div>
-                    <div class="prev-right">
-                        <div class="prev-status win">✓ TP3</div>
-                        <div class="prev-profit win">+78.5p</div>
-                    </div>
-                </div>
+                <div style="text-align: center; color: #64748b; padding: 16px; font-size: 14px;">Loading...</div>
             </div>
         </div>
         
@@ -408,13 +379,13 @@
         <div class="report-section" id="reportSection">
             <div class="report-header">
                 <span class="report-title">🗓️ Yesterday's Report</span>
-                <span class="report-date" id="reportDate">Feb 02, 2026</span>
+                <span class="report-date" id="reportDate">---</span>
             </div>
             <div class="report-grid">
                 <div class="report-item">
                     <div class="report-item-label">✓ TP</div>
-                    <div class="report-item-value tp" id="reportTpCount">5</div>
-                    <div class="report-item-pips win" id="reportTpPips">+276.0p</div>
+                    <div class="report-item-value tp" id="reportTpCount">0</div>
+                    <div class="report-item-pips win" id="reportTpPips">+0.0p</div>
                 </div>
                 <div class="report-item">
                     <div class="report-item-label">✗ SL</div>
@@ -429,25 +400,30 @@
             </div>
             <div class="report-net" id="reportNet">
                 <span class="report-net-label">NET:</span>
-                <span class="report-net-value" id="reportNetValue">+276.0 pips 🚀</span>
+                <span class="report-net-value" id="reportNetValue">+0.0 pips</span>
             </div>
         </div>
     </div>
 
     <script>
-        const UPDATE_INTERVAL = 1000;
-        
+        const UPDATE_INTERVAL = 2000;
+        const SERVER = 'http://localhost:8000';
+
         function loadData() {
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', 'data.json?' + Date.now(), true);
+            xhr.open('GET', SERVER + '/api/signal?' + Date.now(), true);
+            xhr.timeout = 5000;
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        if (data) updateUI(data);
-                    } catch (e) {}
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data) updateUI(data);
+                        } catch (e) {}
+                    }
                 }
             };
+            xhr.onerror = function() {};
             xhr.send();
         }
         
