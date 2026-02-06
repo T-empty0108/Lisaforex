@@ -28,10 +28,9 @@ start /B python -X utf8 server.py >nul 2>&1
 :: Wait for server to start
 timeout /t 3 /nobreak >nul
 
-:: Step 3: Open chart and display in browser
-echo [3/4] Opening browser...
-start "" "http://localhost:8000/"
-start "" "%~dp0display.html"
+:: Step 3: Browser auto-reconnects, no need to open new tabs
+echo [3/4] Server ready at http://localhost:8000/
+echo       (Browser/OBS will auto-reconnect)
 
 :: Step 4: Start Telegram Bot (foreground - keeps window open)
 echo [4/4] Starting Telegram Bot...

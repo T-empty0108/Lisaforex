@@ -152,9 +152,53 @@
     }
 
     // ═══════════════════════════════════════════
-    // SCROLL: Auto / Pin (5-min interval)
+    // SCROLL: Auto (center) / Pin (remember position)
+    // Both refresh every 5 minutes
     // ═══════════════════════════════════════════
     let pinTimer = null;
+    let pinOffset = null;  // Pin mode: khoảng cách từ nến cuối đến cạnh phải view
+
+    // Auto mode: đưa nến cuối cùng về CHÍNH GIỮA màn hình
+    function scrollToCenter() {
+        const vr = chart.timeScale().getVisibleLogicalRange();
+        if (!vr) return;
+        const vw = vr.to - vr.from;
+        const half = Math.floor(vw / 2);
+        const allLen = hist.length + (liveC && liveC.time > lastHT ? 1 : 0);
+        const lastIdx = allLen - 1;
+        chart.timeScale().setVisibleLogicalRange({
+            from: lastIdx - half,
+            to: lastIdx + half,
+        });
+    }
+
+    // Pin mode: đưa nến cuối cùng về vị trí đã ghi nhớ
+    function scrollToPinPos() {
+        if (pinOffset === null) return;
+        const vr = chart.timeScale().getVisibleLogicalRange();
+        if (!vr) return;
+        const vw = vr.to - vr.from;
+        const allLen = hist.length + (liveC && liveC.time > lastHT ? 1 : 0);
+        const lastIdx = allLen - 1;
+        const newTo = lastIdx + pinOffset;
+        chart.timeScale().setVisibleLogicalRange({
+            from: newTo - vw,
+            to: newTo,
+        });
+    }
+
+    // Ghi nhớ vị trí nến cuối cùng khi người dùng thả chuột (Pin mode)
+    function savePinPosition() {
+        if (scrollM !== 'pin') return;
+        const vr = chart.timeScale().getVisibleLogicalRange();
+        if (!vr) return;
+        const allLen = hist.length + (liveC && liveC.time > lastHT ? 1 : 0);
+        const lastIdx = allLen - 1;
+        pinOffset = vr.to - lastIdx;  // vị trí tương đối của nến cuối so với cạnh phải
+    }
+
+    chartEl.addEventListener('mouseup', savePinPosition);
+    chartEl.addEventListener('touchend', savePinPosition);
 
     function setScroll(m) {
         scrollM = m;
@@ -162,20 +206,28 @@
         document.getElementById('btnP').classList.toggle('active', m === 'pin');
         if (pinTimer) { clearInterval(pinTimer); pinTimer = null; }
         if (m === 'auto') {
-            chart.timeScale().scrollToRealTime();
+            scrollToCenter();
+            pinTimer = setInterval(scrollToCenter, 5 * 60 * 1000);
         } else {
-            // Pin mode: scroll to realtime every 5 minutes
-            pinTimer = setInterval(() => {
-                chart.timeScale().scrollToRealTime();
-            }, 5 * 60 * 1000);
+            // Pin mode: ghi nhớ vị trí hiện tại, lặp lại mỗi 5 phút
+            savePinPosition();
+            pinTimer = setInterval(scrollToPinPos, 5 * 60 * 1000);
         }
     }
     document.getElementById('btnA').addEventListener('click', () => setScroll('auto'));
     document.getElementById('btnP').addEventListener('click', () => setScroll('pin'));
 
     function smartScroll() {
-        if (scrollM === 'auto') { chart.timeScale().scrollToRealTime(); return; }
+        if (scrollM === 'auto') { scrollToCenter(); return; }
         // Pin mode: do nothing — timer handles it every 5 minutes
+    }
+
+    // Bảo vệ vị trí chart khi Pin mode: lưu trước, khôi phục sau
+    function guardView(fn) {
+        if (scrollM !== 'pin') { fn(); return; }
+        const saved = chart.timeScale().getVisibleLogicalRange();
+        fn();
+        if (saved) chart.timeScale().setVisibleLogicalRange(saved);
     }
 
     // ═══════════════════════════════════════════
@@ -530,7 +582,7 @@
                 if (price > last.high) last.high = price;
                 if (price < last.low) last.low = price;
                 if (ready) cSeries.update(last);
-                else { cSeries.setData(hist); ready = true; }
+                else { guardView(() => { cSeries.setData(hist); }); ready = true; }
                 smartScroll(); updCC(); return;
             }
         }
@@ -538,7 +590,7 @@
             if (!ready) {
                 const a = [...hist];
                 if (liveC.time > lastHT) a.push(liveC);
-                cSeries.setData(a); ready = true;
+                guardView(() => { cSeries.setData(a); }); ready = true;
             } else {
                 cSeries.update(liveC);
             }
@@ -551,7 +603,7 @@
         if (!cSeries) return;
         let a = [...hist];
         if (liveC && liveC.time > lastHT) a.push(liveC);
-        cSeries.setData(a);
+        guardView(() => { cSeries.setData(a); });
         if (initial && a.length > 0) {
             // Show last ~120 candles, with the last candle in center-right
             const barsToShow = 120;
@@ -695,28 +747,22 @@
         sigCurrent = sig;
 
         if (isNew) {
-            // Save current view position before modifying series
-            const savedRange = (scrollM === 'pin') ? chart.timeScale().getVisibleLogicalRange() : null;
-
-            // Remove old line series
-            if (sigEntryLine) { try { chart.removeSeries(sigEntryLine); } catch(e) {} }
-            sigEntryTime = sigParseTime(sig.timestamp);
-            // Create LineSeries for entry
-            sigEntryLine = chart.addLineSeries({
-                color: '#fbbf24',
-                lineWidth: 2,
-                lineStyle: LightweightCharts.LineStyle.Dashed,
-                lastValueVisible: true,
-                priceLineVisible: false,
-                crosshairMarkerVisible: false,
-                title: '',
+            guardView(() => {
+                // Remove old line series
+                if (sigEntryLine) { try { chart.removeSeries(sigEntryLine); } catch(e) {} }
+                sigEntryTime = sigParseTime(sig.timestamp);
+                // Create LineSeries for entry
+                sigEntryLine = chart.addLineSeries({
+                    color: '#fbbf24',
+                    lineWidth: 2,
+                    lineStyle: LightweightCharts.LineStyle.Dashed,
+                    lastValueVisible: true,
+                    priceLineVisible: false,
+                    crosshairMarkerVisible: false,
+                    title: '',
+                });
+                sigEntryLine.setData(sigBuildLineData(sig));
             });
-            sigEntryLine.setData(sigBuildLineData(sig));
-
-            // Restore view position in Pin mode
-            if (savedRange) {
-                chart.timeScale().setVisibleLogicalRange(savedRange);
-            }
         } else {
             // Only update line data when a new candle interval starts
             const iSec = INT_SEC[curTF];
