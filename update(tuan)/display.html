@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Lisa Forex - Demo A v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: #fff;
+            padding: 10px;
+        }
+        .panel {
+            background: #0a0a12;
+            border-radius: 20px;
+            width: 400px;
+            overflow: hidden;
+            border: 2px solid #1e293b;
+        }
+        
+        /* Header */
+        .header {
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f0f1a;
+            border-bottom: 2px solid #1e293b;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #22c55e, #06b6d4);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+        .brand-name {
+            font-size: 19px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-badge.waiting { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
+        .status-badge.running { background: rgba(251, 191, 36, 0.25); color: #fcd34d; }
+        .status-badge.tp { background: rgba(34, 197, 94, 0.25); color: #4ade80; }
+        .status-badge.sl { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .status-badge.waiting .status-dot { background: #60a5fa; }
+        .status-badge.running .status-dot { background: #fcd34d; }
+        .status-badge.tp .status-dot { background: #4ade80; }
+        .status-badge.sl .status-dot { background: #f87171; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        /* Current Signal - NỀN XANH */
+        .current-section {
+            padding: 24px 20px 20px;
+            background: linear-gradient(145deg, #0d3b66 0%, #0a2d4d 100%);
+            border-bottom: 2px solid #1e5a8a;
+            text-align: center;
+        }
+        .signal-type {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+        }
+        .signal-type.buy { color: #4ade80; }
+        .signal-type.sell { color: #f87171; }
+        .entry-price {
+            font-size: 28px;
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .entry-price span {
+            color: #7dd3fc;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .profit-box {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 0 10px;
+        }
+        .profit-value {
+            font-size: 52px;
+            font-weight: 900;
+            font-family: 'Roboto Mono', monospace;
+        }
+        .profit-value.win { color: #4ade80; text-shadow: 0 0 30px rgba(74, 222, 128, 0.4); }
+        .profit-value.loss { color: #f87171; text-shadow: 0 0 30px rgba(248, 113, 113, 0.4); }
+        .profit-value.neutral { color: #fff; }
+        .profit-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 6px;
+        }
+        .signal-time {
+            margin-top: 18px;
+            font-size: 16px;
+            color: #bae6fd;
+        }
+        .signal-time strong {
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+        }
+        
+        /* Targets - FONT LỚN HƠN */
+        .targets {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px;
+            background: #0d3b66;
+            border-bottom: 2px solid #1e5a8a;
+        }
+        .target {
+            flex: 1;
+            padding: 14px 8px;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .target-label {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .target.tp .target-label { color: #4ade80; }
+        .target.sl .target-label { color: #f87171; }
+        .target-value {
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        /* Previous Signals - NỀN TỐI */
+        .prev-section {
+            padding: 18px 20px;
+            background: #0a0a12;
+            border-bottom: 2px solid #1e293b;
+        }
+        .prev-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            font-weight: 700;
+        }
+        .prev-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .prev-item {
+            padding: 14px 16px;
+            background: #12121f;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .prev-left {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .prev-type {
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .prev-type.buy { color: #4ade80; }
+        .prev-type.sell { color: #f87171; }
+        .prev-meta {
+            font-size: 14px;
+            color: #94a3b8;
+            font-family: 'Roboto Mono', monospace;
+        }
+        .prev-right {
+            text-align: right;
+        }
+        .prev-status {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .prev-status.win { color: #4ade80; }
+        .prev-status.loss { color: #f87171; }
+        .prev-profit {
+            font-size: 20px;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 900;
+        }
+        .prev-profit.win { color: #4ade80; }
+        .prev-profit.loss { color: #f87171; }
+        
+        /* Yesterday Report */
+        .report-section {
+            padding: 18px 20px;
+            background: #08080f;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .report-title {
+            font-size: 15px;
+            color: #e2e8f0;
+            font-weight: 800;
+        }
+        .report-date {
+            font-size: 14px;
+            color: #94a3b8;
+            font-family: 'Roboto Mono', monospace;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .report-item {
+            padding: 12px 8px;
+            background: #12121f;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            text-align: center;
+        }
+        .report-item-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+        .report-item-value {
+            font-size: 22px;
+            font-weight: 900;
+        }
+        .report-item-value.tp { color: #4ade80; }
+        .report-item-value.sl { color: #f87171; }
+        .report-item-value.exit { color: #60a5fa; }
+        .report-item-pips {
+            font-size: 14px;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .report-item-pips.win { color: #4ade80; }
+        .report-item-pips.loss { color: #f87171; }
+        .report-item-pips.neutral { color: #94a3b8; }
+        
+        .report-net {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(74, 222, 128, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(74, 222, 128, 0.25);
+        }
+        .report-net.loss {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: rgba(248, 113, 113, 0.25);
+        }
+        .report-net-label {
+            font-size: 16px;
+            color: #e2e8f0;
+            font-weight: 700;
+        }
+        .report-net-value {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: 'Roboto Mono', monospace;
+            color: #4ade80;
+        }
+        .report-net.loss .report-net-value { color: #f87171; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <!-- Header -->
+        <div class="header">
+            <div class="brand">
+                <div class="logo">🦊</div>
+                <span class="brand-name">Lisa Forex</span>
+            </div>
+            <div class="status-badge waiting" id="statusBadge">
+                <div class="status-dot"></div>
+                <span id="statusText">WAITING</span>
+            </div>
+        </div>
+        
+        <!-- Current Signal - NỀN XANH -->
+        <div class="current-section" id="currentSection">
+            <div class="signal-type buy" id="signalType">BUY STOP</div>
+            <div class="entry-price"><span>Entry:</span> <span id="entryPrice">4918.97</span></div>
+            <div class="profit-box">
+                <div class="profit-value neutral" id="profitValue">+0.0p</div>
+                <div class="profit-label" id="profitLabel">Profit</div>
+            </div>
+            <div class="signal-time">
+                Signal: <strong id="signalTime">10:04 AM</strong> <span style="color:#7dd3fc">(GMT+0)</span>
+            </div>
+        </div>
+        
+        <!-- Targets -->
+        <div class="targets" id="targetsSection">
+            <div class="target tp">
+                <div class="target-label" id="tp1Label">TP1</div>
+                <div class="target-value" id="tp1Value">4921.9</div>
+            </div>
+            <div class="target tp">
+                <div class="target-label" id="tp2Label">TP2</div>
+                <div class="target-value" id="tp2Value">4923.9</div>
+            </div>
+            <div class="target tp">
+                <div class="target-label" id="tp3Label">TP3</div>
+                <div class="target-value" id="tp3Value">4926.9</div>
+            </div>
+            <div class="target sl">
+                <div class="target-label" id="slLabel">SL</div>
+                <div class="target-value" id="slValue">4915.9</div>
+            </div>
+        </div>
+        
+        <!-- Previous Signals - NỀN TỐI -->
+        <div class="prev-section">
+            <div class="prev-title">📊 Previous Signals</div>
+            <div class="prev-list" id="prevList">
+                <div class="prev-item">
+                    <div class="prev-left">
+                        <span class="prev-type buy">BUY LIMIT</span>
+                        <span class="prev-meta">4916.5 • 8:12 AM</span>
+                    </div>
+                    <div class="prev-right">
+                        <div class="prev-status win">✓ TP3</div>
+                        <div class="prev-profit win">+80.0p</div>
+                    </div>
+                </div>
+                <div class="prev-item">
+                    <div class="prev-left">
+                        <span class="prev-type sell">BUY STOP</span>
+                        <span class="prev-meta">4922 • 7:59 AM</span>
+                    </div>
+                    <div class="prev-right">
+                        <div class="prev-status loss">✗ SL</div>
+                        <div class="prev-profit loss">-40.0p</div>
+                    </div>
+                </div>
+                <div class="prev-item">
+                    <div class="prev-left">
+                        <span class="prev-type buy">BUY LIMIT</span>
+                        <span class="prev-meta">4870.15 • 6:35 AM</span>
+                    </div>
+                    <div class="prev-right">
+                        <div class="prev-status win">✓ TP3</div>
+                        <div class="prev-profit win">+78.5p</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Yesterday Report -->
+        <div class="report-section" id="reportSection">
+            <div class="report-header">
+                <span class="report-title">🗓️ Yesterday's Report</span>
+                <span class="report-date" id="reportDate">Feb 02, 2026</span>
+            </div>
+            <div class="report-grid">
+                <div class="report-item">
+                    <div class="report-item-label">✓ TP</div>
+                    <div class="report-item-value tp" id="reportTpCount">5</div>
+                    <div class="report-item-pips win" id="reportTpPips">+276.0p</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-item-label">✗ SL</div>
+                    <div class="report-item-value sl" id="reportSlCount">0</div>
+                    <div class="report-item-pips loss" id="reportSlPips">-0.0p</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-item-label">⏳ EXIT</div>
+                    <div class="report-item-value exit" id="reportExitCount">0</div>
+                    <div class="report-item-pips neutral" id="reportExitPips">+0.0p</div>
+                </div>
+            </div>
+            <div class="report-net" id="reportNet">
+                <span class="report-net-label">NET:</span>
+                <span class="report-net-value" id="reportNetValue">+276.0 pips 🚀</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const UPDATE_INTERVAL = 1000;
+        
+        function loadData() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', 'data.json?' + Date.now(), true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data) updateUI(data);
+                    } catch (e) {}
+                }
+            };
+            xhr.send();
+        }
+        
+        function updateUI(data) {
+            const signal = data.current_signal;
+            const prevSignals = data.previous_signals || [];
+            const report = data.yesterday_report;
+            
+            if (signal) updateCurrentSignal(signal);
+            updatePreviousSignals(prevSignals);
+            
+            if (report) {
+                updateReport(report);
+                document.getElementById('reportSection').classList.remove('hidden');
+            } else {
+                document.getElementById('reportSection').classList.add('hidden');
+            }
+        }
+        
+        function updateCurrentSignal(s) {
+            const isBuy = s.is_buy;
+            
+            // Status badge
+            const statusBadge = document.getElementById('statusBadge');
+            document.getElementById('statusText').textContent = s.status_display;
+            
+            let badgeClass = 'status-badge ';
+            switch(s.status) {
+                case 'pending': badgeClass += 'waiting'; break;
+                case 'running': badgeClass += 'running'; break;
+                case 'tp1_hit': case 'tp2_hit': case 'tp3_hit': badgeClass += 'tp'; break;
+                case 'sl_hit': badgeClass += 'sl'; break;
+                case 'exit':
+                    badgeClass += s.profit > 0 ? 'tp' : (s.profit < 0 ? 'sl' : 'waiting');
+                    break;
+                default: badgeClass += 'waiting';
+            }
+            statusBadge.className = badgeClass;
+            
+            // Signal type
+            const signalType = document.getElementById('signalType');
+            signalType.textContent = s.signal || '---';
+            signalType.className = isBuy ? 'signal-type buy' : 'signal-type sell';
+            
+            // Entry price
+            document.getElementById('entryPrice').textContent = s.entry || '---';
+            
+            // Profit
+            const profitValue = document.getElementById('profitValue');
+            profitValue.textContent = s.profit_formatted || '0.0p';
+            profitValue.className = 'profit-value ' + (s.profit > 0 ? 'win' : (s.profit < 0 ? 'loss' : 'neutral'));
+            
+            document.getElementById('profitLabel').textContent = s.status === 'running' ? 'Live Profit' : 'Profit';
+            
+            // Signal time
+            if (s.time_formatted) {
+                document.getElementById('signalTime').textContent = s.time_formatted;
+            }
+            
+            // Targets
+            document.getElementById('tp1Value').textContent = s.tp1 || '---';
+            document.getElementById('tp2Value').textContent = s.tp2 || '---';
+            document.getElementById('tp3Value').textContent = s.tp3 || '---';
+            document.getElementById('slValue').textContent = s.sl || '---';
+            
+            document.getElementById('tp1Label').innerHTML = s.tp1_hit ? '✓ TP1' : 'TP1';
+            document.getElementById('tp2Label').innerHTML = s.tp2_hit ? '✓ TP2' : 'TP2';
+            document.getElementById('tp3Label').innerHTML = s.tp3_hit ? '✓ TP3' : 'TP3';
+            document.getElementById('slLabel').innerHTML = s.sl_hit ? '✗ SL' : 'SL';
+        }
+        
+        function updatePreviousSignals(signals) {
+            const prevList = document.getElementById('prevList');
+            
+            if (!signals || signals.length === 0) {
+                prevList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 16px; font-size: 14px;">No previous signals</div>';
+                return;
+            }
+            
+            // Chỉ lấy 2 lệnh gần nhất
+            const recentSignals = signals.slice(0, 2);
+            
+            let html = '';
+            for (const s of recentSignals) {
+                const typeClass = s.is_buy ? 'buy' : 'sell';
+                const statusClass = s.profit > 0 ? 'win' : (s.profit < 0 ? 'loss' : 'neutral');
+                
+                html += `
+                    <div class="prev-item">
+                        <div class="prev-left">
+                            <span class="prev-type ${typeClass}">${s.signal}</span>
+                            <span class="prev-meta">${s.entry} • ${s.time_formatted}</span>
+                        </div>
+                        <div class="prev-right">
+                            <div class="prev-status ${statusClass}">${s.status_display}</div>
+                            <div class="prev-profit ${statusClass}">${s.profit_formatted}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            prevList.innerHTML = html;
+        }
+        
+        function updateReport(r) {
+            document.getElementById('reportDate').textContent = r.date_display || r.date || '---';
+            
+            document.getElementById('reportTpCount').textContent = r.tp_count || 0;
+            document.getElementById('reportTpPips').textContent = formatPips(r.tp_pips || 0);
+            document.getElementById('reportTpPips').className = 'report-item-pips ' + ((r.tp_pips || 0) >= 0 ? 'win' : 'loss');
+            
+            document.getElementById('reportSlCount').textContent = r.sl_count || 0;
+            document.getElementById('reportSlPips').textContent = formatPips(r.sl_pips || 0);
+            document.getElementById('reportSlPips').className = 'report-item-pips loss';
+            
+            document.getElementById('reportExitCount').textContent = r.exit_count || 0;
+            const exitPips = r.exit_pips || 0;
+            document.getElementById('reportExitPips').textContent = formatPips(exitPips);
+            document.getElementById('reportExitPips').className = 'report-item-pips ' + (exitPips > 0 ? 'win' : (exitPips < 0 ? 'loss' : 'neutral'));
+            
+            const netPips = r.net_pips || 0;
+            const reportNet = document.getElementById('reportNet');
+            const reportNetValue = document.getElementById('reportNetValue');
+            
+            if (netPips >= 0) {
+                reportNet.className = 'report-net';
+                reportNetValue.textContent = formatPips(netPips).replace('p', '') + ' pips 🚀';
+            } else {
+                reportNet.className = 'report-net loss';
+                reportNetValue.textContent = formatPips(netPips).replace('p', '') + ' pips';
+            }
+        }
+        
+        function formatPips(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + 'p'; }
+        
+        loadData();
+        setInterval(loadData, UPDATE_INTERVAL);
+    </script>
+</body>
+</html>

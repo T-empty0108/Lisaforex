@@ -1,3 +1,15 @@
-﻿debug_api.py
+debug_api.py
 backup/
 __pycache__/
+.claude/
+nul
+
+# Sensitive / runtime data (local per machine)
+update(tuan)/.env
+update(tuan)/*.session
+update(tuan)/data.json
+update(tuan)/signals.json
+update(tuan)/signals_state.json
+
+# Legacy
+chart.py

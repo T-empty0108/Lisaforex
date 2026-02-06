@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>XAU/USD — OANDA + VIDYA</title>
+    <title>XAU/USD — OANDA + LISA FOREX</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -40,6 +40,17 @@
         .overlay-msg.hidden{display:none}
         .overlay-msg .spinner{display:inline-block;width:18px;height:18px;border:2px solid #1a1a2e;border-top:2px solid #fbbf24;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
         @keyframes spin{to{transform:rotate(360deg)}}
+        .countdown-label{position:absolute;z-index:16;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#fff;padding:2px 20px 2px 14px;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap;text-align:center}
+        .countdown-label.visible{opacity:1}
+        .signal-label{position:absolute;z-index:15;pointer-events:none;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .2s}
+        .signal-label.visible{opacity:1}
+        .signal-label .sig-text{color:#fbbf24;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);padding:2px 8px;border-radius:4px}
+        .signal-label .sig-status{padding:2px 8px;border-radius:4px;font-weight:800;text-transform:uppercase}
+        .signal-label .sig-status.waiting{color:#60a5fa;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);animation:sigBlink 1s infinite}
+        .signal-label .sig-status.running{color:#fcd34d;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);animation:sigBlink 1s infinite}
+        .signal-label .sig-status.tp{color:#4ade80;background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4)}
+        .signal-label .sig-status.sl{color:#f87171;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4)}
+        @keyframes sigBlink{0%,100%{opacity:1}50%{opacity:.3}}
         .scroll-mode-btns{position:absolute;bottom:12px;right:12px;z-index:16;display:flex;gap:4px}
         .scroll-mode-btn{width:32px;height:32px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;border:1px solid #1a1a2e;background:rgba(0,0,0,.7);color:#555;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
         .scroll-mode-btn:hover{border-color:#fbbf24;color:#fbbf24}
@@ -52,7 +63,7 @@
         <div class="top-left">
             <div class="pair-name">⚜ XAU / USD</div>
             <div class="source-tag">OANDA</div>
-            <div class="indicator-tag">VIDYA</div>
+            <div class="indicator-tag">LISA FOREX</div>
             <div class="live-price" id="livePrice">Connecting...</div>
             <div class="price-change up" id="priceChange">--</div>
         </div>
@@ -75,6 +86,8 @@
         <div class="watermark">XAU/USD</div>
         <div class="overlay-msg" id="overlay"><span class="spinner"></span> Đang kết nối...</div>
         <!-- VIDYA legend and Vol Delta removed -->
+        <div class="countdown-label" id="countdown"></div>
+        <div class="signal-label" id="signalLabel"><span class="sig-text" id="sigText"></span><span class="sig-status" id="sigStatus"></span></div>
         <div class="scroll-mode-btns">
             <button class="scroll-mode-btn active" id="btnA" title="Auto scroll">A</button>
             <button class="scroll-mode-btn" id="btnP" title="Elastic pin">P</button>
@@ -123,9 +136,9 @@
             vertLine: { color:'rgba(251,191,36,0.3)', width:1, style:2, labelBackgroundColor:'#1a1a2e' },
             horzLine: { color:'rgba(251,191,36,0.3)', width:1, style:2, labelBackgroundColor:'#1a1a2e' },
         },
-        rightPriceScale: { borderColor:'#1a1a2e', scaleMargins:{ top:0.05, bottom:0.05 } },
-        timeScale: { borderColor:'#1a1a2e', timeVisible:true, secondsVisible:false, barSpacing:6, rightOffset:5 },
-        localization: { timeFormatter: t => new Date(t*1000).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) },
+        rightPriceScale: { borderColor:'#1a1a2e', scaleMargins:{ top:0.15, bottom:0.15 }, autoScale:true },
+        timeScale: { borderColor:'#1a1a2e', timeVisible:true, secondsVisible:false, barSpacing:6, rightOffset:15 },
+        localization: { timeFormatter: t => new Date(t*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'}) },
     });
 
     // cSeries created dynamically in loadHist — added AFTER indicator layers so candles render on top
@@ -209,7 +222,7 @@
     // ═══════════════════════════════════════════
     async function loadHist(tf) {
         const ov = document.getElementById('overlay');
-        ov.innerHTML = `<span class="spinner"></span> Đang tải OANDA (${tf}m) + VIDYA...`;
+        ov.innerHTML = `<span class="spinner"></span> Đang tải OANDA (${tf}m) + LISA FOREX...`;
         ov.classList.remove('hidden');
         try {
             const resp = await fetch(`${SERVER}/api/history?interval=${tf}&bars=${HIST_BARS[tf]||500}`);
@@ -227,10 +240,13 @@
             cSeries = chart.addCandlestickSeries({
                 upColor:C_UP, downColor:C_DN, borderUpColor:C_UP, borderDownColor:C_DN,
                 wickUpColor:C_UP, wickDownColor:C_DN,
-                lastValueVisible: true,   // single price label on axis
-                priceLineVisible: false,   // no full-width horizontal line
+                lastValueVisible: true,
+                priceLineVisible: true,
+                priceLineWidth: 1,
+                priceLineStyle: LightweightCharts.LineStyle.Dotted,
+                priceLineColor: '#089981',
             });
-            renderAll();
+            renderAll(true);
 
             ov.classList.add('hidden');
             console.log(`✅ ${hist.length} candles | VIDYA: ${data.indicator?.vidya_line?.length||0}`);
@@ -413,7 +429,49 @@
 
     function r3(v) { return Math.round(v * 1000) / 1000; }
 
-    // (Price line removed — using single lastValueVisible label on candle series)
+    // ═══════════════════════════════════════════
+    // COUNTDOWN TIMER
+    // ═══════════════════════════════════════════
+    const countdownEl = document.getElementById('countdown');
+    // Shared up/down state for price label + countdown color sync
+    let lastCandleUp = true;
+
+    function updCandleDirection() {
+        const cur = liveC || (hist.length ? hist[hist.length-1] : null);
+        if (!cur) return;
+        lastCandleUp = cur.close >= cur.open;
+    }
+
+    function updCountdown() {
+        const cur = liveC || (hist.length ? hist[hist.length-1] : null);
+        if (!cur || !cSeries) { countdownEl.classList.remove('visible'); return; }
+        const endTime = cur.time + curSec;
+        const remain = endTime - Math.floor(Date.now() / 1000);
+        if (remain <= 0 || remain > curSec) { countdownEl.classList.remove('visible'); return; }
+        const mm = Math.floor(remain / 60);
+        const ss = remain % 60;
+        countdownEl.textContent = String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+        // Position right below the price label on Y axis
+        const py = cSeries.priceToCoordinate(cur.close);
+        if (py === null || isNaN(py)) { countdownEl.classList.remove('visible'); return; }
+        countdownEl.style.top = (py + 9) + 'px';
+        // Background same hue as price label but lighter
+        countdownEl.style.background = lastCandleUp ? 'rgba(8,153,129,0.55)' : 'rgba(242,54,69,0.55)';
+        countdownEl.style.color = '#fff';
+        // Center countdown within price scale area
+        const psW = chart.priceScale('right').width();
+        const cdW = countdownEl.offsetWidth;
+        const chartW = chartEl.clientWidth;
+        countdownEl.style.left = (chartW - psW + (psW - cdW) / 2 - 5.5) + 'px';
+        countdownEl.classList.add('visible');
+    }
+    setInterval(updCountdown, 1000);
+
+    // Update price line color based on candle direction
+    function updPriceLineColor() {
+        if (!cSeries) return;
+        cSeries.applyOptions({ priceLineColor: lastCandleUp ? C_UP : C_DN });
+    }
 
     // ═══════════════════════════════════════════
     // WEBSOCKET
@@ -455,6 +513,10 @@
         }
 
         rTick(price, ct);
+        updCandleDirection();
+        updPriceLineColor();
+        updCountdown();
+        if (sigCurrent) sigUpdatePos();
         updUI(price, lat);
         prevP = price;
     }
@@ -493,12 +555,19 @@
         smartScroll();
     }
 
-    function renderAll() {
+    function renderAll(initial) {
         if (!cSeries) return;
         let a = [...hist];
         if (liveC && liveC.time > lastHT) a.push(liveC);
         cSeries.setData(a);
-        smartScroll();
+        if (initial && a.length > 0) {
+            // Show last ~120 candles, with the last candle in center-right
+            const barsToShow = 120;
+            const from = Math.max(0, a.length - barsToShow);
+            chart.timeScale().setVisibleLogicalRange({ from: from, to: a.length + 15 });
+        } else {
+            smartScroll();
+        }
         ready = true;
         updCC();
     }
@@ -551,7 +620,7 @@
         }
         const d = new Date();
         document.getElementById('updateTime').textContent =
-            [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2,'0')).join(':');
+            [d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()].map(v => String(v).padStart(2,'0')).join(':');
         document.getElementById('tickCount').textContent = ticks;
         document.getElementById('statOpen').textContent = sOpen ? sOpen.toFixed(2) : '---';
         document.getElementById('statHigh').textContent = sHi > 0 ? sHi.toFixed(2) : '---';
@@ -559,6 +628,159 @@
         document.getElementById('statSpread').textContent = (sHi > 0 && sLo < Infinity) ? (sHi - sLo).toFixed(2) : '---';
         if (lat > 0) document.getElementById('statLatency').textContent = lat + 'ms';
     }
+
+    // ═══════════════════════════════════════════
+    // SIGNAL FROM data.json
+    // ═══════════════════════════════════════════
+    const sigLabelEl = document.getElementById('signalLabel');
+    const sigTextEl = document.getElementById('sigText');
+    const sigStatusEl = document.getElementById('sigStatus');
+    let sigEntryLine = null;   // LineSeries for entry price line
+    let sigCurrent = null;     // current signal data cache
+    let sigTimestamp = null;    // track signal changes
+    let sigEntryTime = null;   // unix timestamp of signal start
+    let sigLastEndT = 0;       // last end time used in line data (avoid unnecessary updates)
+
+    function sigStatusInfo(status) {
+        // Map data.json status → display text + CSS class
+        switch(status) {
+            case 'pending':  return { text:'WAITING', cls:'waiting' };
+            case 'running':  return { text:'RUNNING', cls:'running' };
+            case 'tp1_hit':  return { text:'✓ TP1', cls:'tp' };
+            case 'tp2_hit':  return { text:'✓ TP2', cls:'tp' };
+            case 'tp3_hit':  return { text:'✓ TP3', cls:'tp' };
+            case 'sl_hit':   return { text:'✗ SL', cls:'sl' };
+            case 'exit':     return { text:'EXIT', cls:'waiting' };
+            default:         return { text:status?.toUpperCase()||'--', cls:'waiting' };
+        }
+    }
+
+    function sigParseTime(ts) {
+        // Parse "2026-02-05 22:45:38" (GMT+7) → unix timestamp (UTC)
+        if (!ts) return null;
+        const m = ts.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+        if (!m) return null;
+        const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4]-7, +m[5], +m[6]));
+        return Math.floor(d.getTime() / 1000);
+    }
+
+    function sigRemove() {
+        if (sigEntryLine) {
+            try { chart.removeSeries(sigEntryLine); } catch(e) {}
+            sigEntryLine = null;
+        }
+        sigLabelEl.classList.remove('visible');
+        sigCurrent = null;
+        sigTimestamp = null;
+        sigEntryTime = null;
+        sigLastEndT = 0;
+    }
+
+    function sigBuildLineData(sig) {
+        // Build line data from signal time to current candle time
+        const startT = sigEntryTime;
+        if (!startT) return [];
+        const iSec = INT_SEC[curTF];
+        // Snap start to candle interval
+        const snapStart = Math.floor(startT / iSec) * iSec;
+        // End at current time (latest candle or now)
+        const now = Math.floor(Date.now() / 1000);
+        const snapEnd = Math.floor(now / iSec) * iSec;
+        const pts = [];
+        // Extend line far into the future so it reaches the right edge of the chart
+        for (let t = snapStart; t <= snapEnd + iSec * 100; t += iSec) {
+            pts.push({ time: t, value: sig.entry });
+        }
+        sigLastEndT = snapEnd;
+        return pts;
+    }
+
+    function sigDraw(sig) {
+        if (!cSeries || !sig || !sig.entry) { sigRemove(); return; }
+
+        const isNew = sig.timestamp !== sigTimestamp;
+        sigTimestamp = sig.timestamp;
+        sigCurrent = sig;
+
+        if (isNew) {
+            // Remove old line series
+            if (sigEntryLine) { try { chart.removeSeries(sigEntryLine); } catch(e) {} }
+            sigEntryTime = sigParseTime(sig.timestamp);
+            // Create LineSeries for entry
+            sigEntryLine = chart.addLineSeries({
+                color: '#fbbf24',
+                lineWidth: 2,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                lastValueVisible: true,
+                priceLineVisible: false,
+                crosshairMarkerVisible: false,
+                title: '',
+            });
+            sigEntryLine.setData(sigBuildLineData(sig));
+        } else {
+            // Only update line data when a new candle interval starts
+            const iSec = INT_SEC[curTF];
+            const nowSnap = Math.floor(Date.now() / 1000 / iSec) * iSec;
+            if (sigEntryLine && nowSnap > sigLastEndT) {
+                sigEntryLine.setData(sigBuildLineData(sig));
+            }
+        }
+
+        // Update label text
+        const sigName = sig.signal || 'SIGNAL';
+        sigTextEl.textContent = sigName + ' ' + sig.entry;
+
+        // Update status badge
+        const si = sigStatusInfo(sig.status);
+        sigStatusEl.textContent = si.text;
+        sigStatusEl.className = 'sig-status ' + si.cls;
+
+        // Position label above entry line, centered on chart
+        sigUpdatePos();
+    }
+
+    function sigUpdatePos() {
+        if (!sigCurrent || !cSeries || !sigEntryTime) { sigLabelEl.classList.remove('visible'); return; }
+        const py = cSeries.priceToCoordinate(sigCurrent.entry);
+        if (py === null || isNaN(py)) { sigLabelEl.classList.remove('visible'); return; }
+        // Position above entry line
+        sigLabelEl.style.top = (py - 22) + 'px';
+        // X position: at signal candle, or pinned to left edge if signal is off-screen left
+        const iSec = INT_SEC[curTF];
+        const snapStart = Math.floor(sigEntryTime / iSec) * iSec;
+        const px = chart.timeScale().timeToCoordinate(snapStart);
+        if (px !== null && !isNaN(px) && px >= 0) {
+            // Signal candle is visible — position label at that candle
+            sigLabelEl.style.left = px + 'px';
+        } else {
+            // Signal candle is off-screen left — pin label to left edge
+            sigLabelEl.style.left = '8px';
+        }
+        sigLabelEl.classList.add('visible');
+    }
+
+    // Poll signal data every 2 seconds
+    function fetchSignal() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', SERVER + '/api/signal?' + Date.now(), true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data && data.current_signal) {
+                        sigDraw(data.current_signal);
+                    } else {
+                        sigRemove();
+                    }
+                } catch(e) { /* ignore parse errors */ }
+            }
+        };
+        xhr.send();
+    }
+    setInterval(fetchSignal, 2000);
+
+    // Also reposition signal label when chart scrolls or resizes
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => { if (sigCurrent) sigUpdatePos(); });
 
     // ═══════════════════════════════════════════
     // TF BUTTONS
@@ -570,9 +792,11 @@
             curTF = btn.dataset.tf;
             curSec = INT_SEC[curTF];
             liveC = null; ready = false; saved = null;
+            sigRemove();
             clrExtra();
             setScroll('auto');
             await loadHist(curTF);
+            fetchSignal();
             startRefresh();
         });
     });
@@ -588,6 +812,7 @@
         curSec = INT_SEC[curTF];
         await loadHist(curTF);
         connectWS();
+        fetchSignal();
         startRefresh();
     })();
 })();

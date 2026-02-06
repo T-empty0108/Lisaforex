@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>AI Trading Signal</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 8px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #020915;
+            color: #fff;
+        }
+        .panel {
+            background: #071321;
+            border-radius: 16px;
+            padding: 12px 14px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+            width: 360px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            color: #9fb3c8;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .dot-latest { background: #3b82f6; }
+        .dot-prev   { background: #f97316; }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        .label { color: #9fb3c8; }
+        .value { font-weight: 600; }
+        .sig-buy { color: #0ecb81; }
+        .sig-sell { color: #ef5350; }
+        .res-waiting { color: #3898ff; }
+        .res-running { color: #ffc93c; }
+        .res-win { color: #0ecb81; }
+        .res-loss { color: #ef5350; }
+        .divider {
+            border-bottom: 1px solid #1f2f44;
+            margin: 10px 0 8px 0;
+        }
+        .prev-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .prev-table th,
+        .prev-table td {
+            text-align: center;
+            padding: 3px 2px;
+        }
+        .prev-table th {
+            color: #9fb3c8;
+            font-weight: 600;
+        }
+        .time-small {
+            font-size: 12px;
+            color: #cfd8e3;
+        }
+        .status-text {
+            font-weight: 600;
+            margin-bottom: 1px;
+        }
+        .profit-text {
+            font-size: 11px;
+        }
+        .price-now {
+            font-size: 11px;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="section-title">
+      <div class="dot dot-latest"></div>
+      Latest Signal
+    </div>
+    <div class="row">
+      <div class="label">Signal:</div>
+      <div class="value sig-buy">BUY</div>
+    </div>
+    <div class="row">
+      <div class="label">Entry:</div>
+      <div class="value">4918.8</div>
+    </div>
+    <div class="row"><div class="label">TP1:</div><div class="value">4921.8</div></div>
+    <div class="row"><div class="label">TP2:</div><div class="value">4923.8</div></div>
+    <div class="row"><div class="label">TP3:</div><div class="value">4926.8</div></div>
+    <div class="row"><div class="label">SL:</div><div class="value">4915.8</div></div>
+    <div class="row">
+      <div class="label">Status:</div>
+      <div class="value res-waiting">Waiting</div>
+    </div>
+    <div class="row">
+      <div class="label">Profit:</div>
+      <div class="value res-waiting">0.0p</div>
+    </div>
+    <div class="row">
+      <div class="label">Time (GMT+7):</div>
+      <div class="value time-small">2026-02-03 16:07:42</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">
+      <div class="dot dot-prev"></div>
+      Previous Signals
+    </div>
+    <table class="prev-table">
+      <tr>
+        <th>Signal</th>
+        <th>Entry</th>
+        <th>Status / Profit</th>
+        <th>Time</th>
+      </tr>
+      
+          <tr>
+            <td class="sig-buy">BUY</td>
+            <td>4916.5</td>
+            <td>
+              <div class="status-text res-win">TP3 ✅</div>
+              <div class="profit-text res-win">+80.0p</div>
+            </td>
+            <td class="time-small">14:58</td>
+          </tr>
+        
+          <tr>
+            <td class="sig-buy">BUY</td>
+            <td>4922.0</td>
+            <td>
+              <div class="status-text res-loss">SL ❌</div>
+              <div class="profit-text res-loss">-304.9p</div>
+            </td>
+            <td class="time-small">14:49</td>
+          </tr>
+        
+          <tr>
+            <td class="sig-buy">BUY</td>
+            <td>4870.15</td>
+            <td>
+              <div class="status-text res-win">TP3 ✅</div>
+              <div class="profit-text res-win">+213.6p</div>
+            </td>
+            <td class="time-small">13:28</td>
+          </tr>
+        
+    </table>
+    
+    <div class="price-now">Current: 4891.51</div>
+  </div>
+  
+  <script>
+    setTimeout(function() {
+      location.reload();
+    }, 1000);
+  </script>
+</body>
+</html>

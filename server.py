@@ -471,6 +471,19 @@ async def health():
     return {"status":"ok","ticks":poller.tick_count,"clients":len(poller.clients),"price":poller.latest_price}
 
 
+@app.get("/api/signal")
+async def serve_signal():
+    """Serve data.json from update(tuan) folder for signal display on chart"""
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "update(tuan)", "data.json")
+    if os.path.exists(p):
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                return JSONResponse(json.load(f))
+        except Exception:
+            return JSONResponse({"error": "parse error"}, status_code=500)
+    return JSONResponse({"error": "data.json not found"}, status_code=404)
+
+
 @app.get("/")
 async def serve_chart():
     p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chart.html")
