@@ -1,46 +1,44 @@
 @echo off
 chcp 65001 >nul
-title LISA FOREX - Launcher
+title LISA FOREX - MT5 Version
 
 :: Set working directory to where this bat file is located
-cd /d "%~dp0\.."
+cd /d "%~dp0"
 
 echo ============================================================
-echo    LISA FOREX - AUTO LAUNCHER
+echo    LISA FOREX - MT5 EXNESS VERSION (TEST)
 echo ============================================================
 echo.
 
-:: Step 1: Git pull latest code (optional)
-echo [1/4] Update code from GitHub?
-set /p PULL_CHOICE="Ban co muon cap nhat code tu GitHub? (Y/N): "
-if /i "%PULL_CHOICE%"=="Y" (
-    echo Dang cap nhat code tu GitHub...
-    git pull
-) else (
-    echo Bo qua cap nhat, su dung code local.
-)
+:: Step 1: Check MT5 running
+echo [1/3] Checking MT5...
+echo       Dam bao MetaTrader 5 dang mo va da login EXNESS
 echo.
 
-:: Step 2: Start server.py (FastAPI + WebSocket + Chart)
-echo [2/4] Starting server.py on port 8000...
-start /B python -X utf8 server.py >nul 2>&1
+:: Step 2: Start server(mt5).py
+echo [2/3] Starting server(mt5).py on port 8000...
+start /B python -X utf8 "server(mt5).py" >nul 2>&1
 
 :: Wait for server to start
 timeout /t 3 /nobreak >nul
 
-:: Step 3: Browser auto-reconnects, no need to open new tabs
-echo [3/4] Server ready at http://localhost:8000/
-echo       (Browser/OBS will auto-reconnect)
+echo       Server ready!
+echo.
+echo ------------------------------------------------------------
+echo   LINKS (copy paste vao Chrome):
+echo   http://localhost:8000/display
+echo   http://localhost:8000
+echo ------------------------------------------------------------
+echo.
 
-:: Step 4: Start Telegram Bot (foreground - keeps window open)
-echo [4/4] Starting Telegram Bot...
+:: Step 3: Start Telegram Bot (foreground - keeps window open)
+echo [3/3] Starting Telegram Bot (MT5)...
 echo.
 echo ============================================================
 echo  Press Ctrl+C to stop the bot and all services
 echo ============================================================
 echo.
-cd /d "%~dp0"
-python -X utf8 telegram_html_bot.py
+python -X utf8 "telegram_html_bot(mt5).py"
 
 :: When bot stops, clean up
 echo.
