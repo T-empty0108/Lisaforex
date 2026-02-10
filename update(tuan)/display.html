@@ -19,7 +19,7 @@
             overflow: hidden;
             border: 2px solid #1e293b;
         }
-        
+
         /* Header */
         .header {
             padding: 14px 20px;
@@ -77,7 +77,7 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.4; }
         }
-        
+
         /* Current Signal - NỀN XANH */
         .current-section {
             padding: 24px 20px 20px;
@@ -137,7 +137,7 @@
             font-family: 'Roboto Mono', monospace;
             font-weight: 700;
         }
-        
+
         /* Targets - FONT LỚN HƠN */
         .targets {
             display: flex;
@@ -171,7 +171,7 @@
             color: #fff;
             font-family: 'Roboto Mono', monospace;
         }
-        
+
         /* Previous Signals - NỀN TỐI */
         .prev-section {
             padding: 18px 20px;
@@ -233,7 +233,7 @@
         }
         .prev-profit.win { color: #4ade80; }
         .prev-profit.loss { color: #f87171; }
-        
+
         /* Yesterday Report */
         .report-section {
             padding: 18px 20px;
@@ -290,7 +290,7 @@
         .report-item-pips.win { color: #4ade80; }
         .report-item-pips.loss { color: #f87171; }
         .report-item-pips.neutral { color: #94a3b8; }
-        
+
         .report-net {
             display: flex;
             justify-content: space-between;
@@ -316,7 +316,7 @@
             color: #4ade80;
         }
         .report-net.loss .report-net-value { color: #f87171; }
-        
+
         .hidden { display: none; }
     </style>
 </head>
@@ -333,7 +333,7 @@
                 <span id="statusText">WAITING</span>
             </div>
         </div>
-        
+
         <!-- Current Signal - NỀN XANH -->
         <div class="current-section" id="currentSection">
             <div class="signal-type buy" id="signalType">---</div>
@@ -346,7 +346,7 @@
                 Signal: <strong id="signalTime">--:--</strong> <span style="color:#7dd3fc">(GMT+0)</span>
             </div>
         </div>
-        
+
         <!-- Targets -->
         <div class="targets" id="targetsSection">
             <div class="target tp">
@@ -366,7 +366,7 @@
                 <div class="target-value" id="slValue">---</div>
             </div>
         </div>
-        
+
         <!-- Previous Signals - NỀN TỐI -->
         <div class="prev-section">
             <div class="prev-title">📊 Previous Signals</div>
@@ -374,7 +374,7 @@
                 <div style="text-align: center; color: #64748b; padding: 16px; font-size: 14px;">Loading...</div>
             </div>
         </div>
-        
+
         <!-- Yesterday Report -->
         <div class="report-section" id="reportSection">
             <div class="report-header">
@@ -426,15 +426,15 @@
             xhr.onerror = function() {};
             xhr.send();
         }
-        
+
         function updateUI(data) {
             const signal = data.current_signal;
             const prevSignals = data.previous_signals || [];
             const report = data.yesterday_report;
-            
+
             if (signal) updateCurrentSignal(signal);
             updatePreviousSignals(prevSignals);
-            
+
             if (report) {
                 updateReport(report);
                 document.getElementById('reportSection').classList.remove('hidden');
@@ -442,14 +442,14 @@
                 document.getElementById('reportSection').classList.add('hidden');
             }
         }
-        
+
         function updateCurrentSignal(s) {
             const isBuy = s.is_buy;
-            
+
             // Status badge
             const statusBadge = document.getElementById('statusBadge');
             document.getElementById('statusText').textContent = s.status_display;
-            
+
             let badgeClass = 'status-badge ';
             switch(s.status) {
                 case 'pending': badgeClass += 'waiting'; break;
@@ -462,55 +462,55 @@
                 default: badgeClass += 'waiting';
             }
             statusBadge.className = badgeClass;
-            
+
             // Signal type
             const signalType = document.getElementById('signalType');
             signalType.textContent = s.signal || '---';
             signalType.className = isBuy ? 'signal-type buy' : 'signal-type sell';
-            
+
             // Entry price
             document.getElementById('entryPrice').textContent = s.entry || '---';
-            
+
             // Profit
             const profitValue = document.getElementById('profitValue');
             profitValue.textContent = s.profit_formatted || '0.0p';
             profitValue.className = 'profit-value ' + (s.profit > 0 ? 'win' : (s.profit < 0 ? 'loss' : 'neutral'));
-            
+
             document.getElementById('profitLabel').textContent = s.status === 'running' ? 'Live Profit' : 'Profit';
-            
+
             // Signal time
             if (s.time_formatted) {
                 document.getElementById('signalTime').textContent = s.time_formatted;
             }
-            
+
             // Targets
             document.getElementById('tp1Value').textContent = s.tp1 || '---';
             document.getElementById('tp2Value').textContent = s.tp2 || '---';
             document.getElementById('tp3Value').textContent = s.tp3 || '---';
             document.getElementById('slValue').textContent = s.sl || '---';
-            
+
             document.getElementById('tp1Label').innerHTML = s.tp1_hit ? '✓ TP1' : 'TP1';
             document.getElementById('tp2Label').innerHTML = s.tp2_hit ? '✓ TP2' : 'TP2';
             document.getElementById('tp3Label').innerHTML = s.tp3_hit ? '✓ TP3' : 'TP3';
             document.getElementById('slLabel').innerHTML = s.sl_hit ? '✗ SL' : 'SL';
         }
-        
+
         function updatePreviousSignals(signals) {
             const prevList = document.getElementById('prevList');
-            
+
             if (!signals || signals.length === 0) {
                 prevList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 16px; font-size: 14px;">No previous signals</div>';
                 return;
             }
-            
+
             // Chỉ lấy 2 lệnh gần nhất
             const recentSignals = signals.slice(0, 2);
-            
+
             let html = '';
             for (const s of recentSignals) {
                 const typeClass = s.is_buy ? 'buy' : 'sell';
                 const statusClass = s.profit > 0 ? 'win' : (s.profit < 0 ? 'loss' : 'neutral');
-                
+
                 html += `
                     <div class="prev-item">
                         <div class="prev-left">
@@ -526,27 +526,27 @@
             }
             prevList.innerHTML = html;
         }
-        
+
         function updateReport(r) {
             document.getElementById('reportDate').textContent = r.date_display || r.date || '---';
-            
+
             document.getElementById('reportTpCount').textContent = r.tp_count || 0;
             document.getElementById('reportTpPips').textContent = formatPips(r.tp_pips || 0);
             document.getElementById('reportTpPips').className = 'report-item-pips ' + ((r.tp_pips || 0) >= 0 ? 'win' : 'loss');
-            
+
             document.getElementById('reportSlCount').textContent = r.sl_count || 0;
             document.getElementById('reportSlPips').textContent = formatPips(r.sl_pips || 0);
             document.getElementById('reportSlPips').className = 'report-item-pips loss';
-            
+
             document.getElementById('reportExitCount').textContent = r.exit_count || 0;
             const exitPips = r.exit_pips || 0;
             document.getElementById('reportExitPips').textContent = formatPips(exitPips);
             document.getElementById('reportExitPips').className = 'report-item-pips ' + (exitPips > 0 ? 'win' : (exitPips < 0 ? 'loss' : 'neutral'));
-            
+
             const netPips = r.net_pips || 0;
             const reportNet = document.getElementById('reportNet');
             const reportNetValue = document.getElementById('reportNetValue');
-            
+
             if (netPips >= 0) {
                 reportNet.className = 'report-net';
                 reportNetValue.textContent = formatPips(netPips).replace('p', '') + ' pips 🚀';
@@ -555,9 +555,9 @@
                 reportNetValue.textContent = formatPips(netPips).replace('p', '') + ' pips';
             }
         }
-        
+
         function formatPips(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + 'p'; }
-        
+
         loadData();
         setInterval(loadData, UPDATE_INTERVAL);
     </script>
